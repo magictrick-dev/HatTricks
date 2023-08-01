@@ -1,8 +1,28 @@
 # DLL / Share Library Hotloading
 
+Hotloading is a very simple, yet powerful construct rarely utilized for C and C++ applications.
+This demonstrate highlights its capabilities by allowing the user to define a set front-end API
+which dynamically loads itself into memory every time it detects a change (a compilation, in this case).
 
+### Implementation Notes
 
-### Theory
+For hotloading to work, the shared library must be able to be written to. Since loading a library
+into memory may potentially lock a DLL, the naive approach is to make a copy of the DLL in a
+discrete directory or simply making a copy using a different name and loading that. This, while easy,
+is not ideal since it effectively doubles the size of our shared library files when in use.
+
+We may find it advantageous to take advantage of the fact that we can load DLLs into memory *manually*,
+thus allowing us to leave the read/write protection of the file out of the picture. Essentially speaking,
+if we pull the entire DLL into memory, the DLL file itself is free to be updated as much as we want.
+
+This then leaves us with a dependency issue--how do we manage the code of the library API without directly
+coupling it with the platform executable API? Realistically, we can follow the GLAD library's approach of
+creating a header file filled with typedefs and function pointers that are filled out during the load process.
+The platform's only responsibility is giving the API a means of actually *getting* to the DLL and fetch procs.
+The front-end API of the library need only provide the "fetch function" that fills out the function pointers
+for the platform.
+
+### Initial Code Theory
 
 ```
 // First, the library defines the functions which it
