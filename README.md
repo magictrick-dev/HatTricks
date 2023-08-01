@@ -1,8 +1,9 @@
 # Magic Trick's Hat Tricks
 
-A compendium of various programming ideas, theory testing, and concepts of mine, compiled into one place.
-Each subsection of this repository is a standalone project or test suite of mine. Feel free to browse,
-test, and use whatever you like.
+A compendium of various programming ideas, theory testing, and concepts of mine,
+compiled into one place. Each subsection of this repository is a standalone
+project or test suite. Feel free to browse, test, and use whatever you like for
+your personal projects.
 
 Some of these projects may be WIPs; which means that they aren't complete. This
 repository is meant to be a showcase, sandbox, and theory testing location for
