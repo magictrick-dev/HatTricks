@@ -1,7 +1,7 @@
 # DLL / Share Library Hotloading
 
 Hotloading is a very simple, yet powerful construct rarely utilized for C and C++ applications.
-This demonstrate highlights its capabilities by allowing the user to define a set front-end API
+This demonstration highlights the capabilities of hotloading by allowing the user to define a set front-end API
 which dynamically loads itself into memory every time it detects a change (a compilation, in this case).
 
 ### Implementation Notes
