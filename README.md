@@ -27,7 +27,7 @@ it builds for Unix as well. This isn't a hard and fast rule, though.
 
 ### Glossary
 
-[DLL / Share Library Hotloading Concepts](./Hotloading) **WIP**
+[DLL / Share Library Hotloading Concepts](./Hotloading) **Example Complete**
 
 **About:** Hotloading is a very simple, yet powerful construct rarely utilized for C and C++ applications.
 This demonstration highlights the capabilities of hotloading by allowing the user to define a set front-end API

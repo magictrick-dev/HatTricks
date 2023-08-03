@@ -6,17 +6,25 @@
 #include <maths.h>
 
 // Required for determining when a library was last updated.
+// Maintains paths of the true library file and the temp file.
 struct DynamicLibrary
 {
     void*   handle;
     size_t  last_file_time;
+
+    char    file_path[256];
+    char    temp_path[256];
 };
 
-// Definitions that must be defined by the platform.
 static inline void get_base_path(char* buffer, size_t buffer_size);
 static inline void set_path_from_base_path(char* buffer, size_t buffer_size, const char* path);
+
 static inline size_t get_last_modified_time(const char* file_path);
-static inline DynamicLibrary load_module_handle(const char* file_path);
+static inline size_t get_file_size(const char* file_path);
+
+static inline bool load_library_instance(DynamicLibrary* library, const char* library_path,
+        const char* temporary_path);
+
 void* get_proc_address(void* module_handle, const char* proc_name);
 
 
@@ -39,6 +47,7 @@ set_path_from_base_path(char* buffer, size_t buffer_size, const char* path)
 
 #if defined(__linux__)
 #include <dlfcn.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
@@ -48,6 +57,14 @@ get_last_modified_time(const char* file_path)
     struct stat file_attributes = {};
     stat(file_path, &file_attributes);
     return (size_t)file_attributes.st_mtime;
+}
+
+static inline size_t
+get_file_size(const char* file_path)
+{
+    struct stat file_attributes = {};
+    stat(file_path, &file_attributes);
+    return (size_t)file_attributes.st_size;
 }
 
 static inline void
@@ -76,14 +93,48 @@ get_base_path(char* buffer, size_t buffer_size)
 
 }
 
-static inline DynamicLibrary
-load_module_handle(const char* module_path)
+static inline bool
+load_library_instance(DynamicLibrary* library, const char* library_path,
+        const char* temporary_path)
 {
-    DynamicLibrary result = {};
+    
+    // Ensure that the user actually gave us a library.
+    assert(library != NULL);
 
-    result.handle = dlopen(module_path, RTLD_NOW);
-    result.last_file_time = get_last_modified_time(module_path);
-    return result;
+    // First, determine if the live version already exists, close it and delete.
+    if ((get_file_size(temporary_path) != 0) && (library->handle))
+    {
+        dlclose(library->handle);
+        unlink(library->temp_path);
+    }
+
+    // Now create a copy.
+    size_t library_file_size = get_file_size(library_path);
+    void* library_file_buffer = malloc(library_file_size);
+    // TODO(Chris): We shouldn't be using malloc for this, instead we should
+    // use some sort of OS level virtual allocation routine to load in large files.
+    
+    int library_fd = open(library_path, O_RDONLY);
+    if (library_fd == -1) return false;
+
+    read(library_fd, library_file_buffer, library_file_size);
+    close(library_fd);
+
+    int temporary_fd = open(temporary_path, O_WRONLY|O_CREAT|O_TRUNC, 00755);
+    if (temporary_fd == -1) return false;
+
+    write(temporary_fd, library_file_buffer, library_file_size);
+    close(temporary_fd);
+
+    // Now open the live version and then return.
+    library->handle = dlopen(temporary_path, RTLD_NOW);
+    library->last_file_time = get_last_modified_time(library_path);
+
+    if (library->handle == NULL)
+        return false;
+
+    return true;
+
 }
 
 void*
@@ -99,46 +150,41 @@ int
 main(int argc, char** argv)
 {
 
-    // Print the base path.
-    std::cout << "Calling path: " << argv[0] << std::endl;
+    // Initialize our library instance.
+    DynamicLibrary hotmaths_library = {};
+    get_base_path(hotmaths_library.file_path, 256);
+    get_base_path(hotmaths_library.temp_path, 256);
+    set_path_from_base_path(hotmaths_library.file_path, 256, "Hotmaths.so");
+    set_path_from_base_path(hotmaths_library.temp_path, 256, "Hotmaths_live.so");
 
-    // Attempt to retrieve the base path of the executable.
-    char base_path_buffer[256];
-    get_base_path(base_path_buffer, 256);
-    std::cout << "Base path: " << base_path_buffer << std::endl;
-    
-    set_path_from_base_path(base_path_buffer, 256, "Hotmaths.so");
-    std::cout << "Request path: " << base_path_buffer << std::endl;
-
-    // Attempt to open the library module.
-    DynamicLibrary hotmaths_library = load_module_handle(base_path_buffer);
-    assert(hotmaths_library.handle != NULL);
-
-    // Now print the last modified time.
-    std::cout << "Last modified time: " << hotmaths_library.last_file_time << std::endl;
-
-    // Now attempt to load the library.
-    if (!init_hotmaths_library(hotmaths_library.handle, get_proc_address))
+    if (!load_library_instance(&hotmaths_library,
+                hotmaths_library.file_path, hotmaths_library.temp_path))
     {
-        std::cout << "Unable to init library." << std::endl;
-        return 1;
+        assert(!"Unable to load the library into memory!");
     }
 
-    int a;
-    int b;
-    a = 4;
-    b = 3;
-
+    // Now actually initialize the library.
+    init_hotmaths_library(hotmaths_library.handle, get_proc_address);
+    
     // A simulated "main loop" which does "stuff".
     static bool runtime_flag = true;
     while (runtime_flag == true)
     {
-        
-        std::cout << "Operation result: " << hotmath_perform_operation(a,b) << std::endl;
+
+        // We will now check the current file time of the library. If the file
+        // time is different, then we know that the file was recomp'd.
+        size_t current_file_time = get_last_modified_time(hotmaths_library.file_path);
+        if (current_file_time != hotmaths_library.last_file_time)
+            load_library_instance(&hotmaths_library,
+                    hotmaths_library.file_path,
+                    hotmaths_library.temp_path);
+
+        std::cout << "Operation result: "
+            << hotmath_perform_operation(3, 4)
+            << std::endl;
 
         // Print some debug information that the loop is doing stuff.
-        std::cout << "Iteration Complete (@ Every 3 Seconds)" << std::endl;
-        std::this_thread::sleep_for(std::chrono::seconds(3));
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
 
     return 0;
