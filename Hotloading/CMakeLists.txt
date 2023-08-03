@@ -24,6 +24,10 @@ if (WIN32)
         VS_STARTUP_PROJECT ${PLATFORM_EXECUTABLE_NAME})
 endif (WIN32)
 
+if (LINUX)
+    target_link_libraries(Hotloading dl)
+endif(LINUX)
+
 set_target_properties(${PLATFORM_RUNTIME_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY
     ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 set_target_properties(${PLATFORM_RUNTIME_NAME} PROPERTIES PREFIX "")
