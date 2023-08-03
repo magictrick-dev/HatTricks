@@ -1,4 +1,4 @@
-# DLL / Share Library Hotloading
+# DLL / Shared Library Hotloading
 
 Hotloading is a very simple, yet powerful construct rarely utilized for C and C++ applications.
 This demonstration highlights the capabilities of hotloading by allowing the user to define a set front-end API
@@ -35,7 +35,7 @@ that the user is running the program in the directory that the executable exists
 in. Relative pathing will not work! You must get the executable location, and then
 construct your relative pathing scheme from that.
 
-    Executable path: `~Development/Project/bin/my_executable`
+    Executable path: `~/Development/Project/bin/my_executable`
 
     Actual library path: `~/Development/Project/bin/my_library.so`
 
