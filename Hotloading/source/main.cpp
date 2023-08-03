@@ -125,6 +125,7 @@ load_library_instance(DynamicLibrary* library, const char* library_path,
 
     write(temporary_fd, library_file_buffer, library_file_size);
     close(temporary_fd);
+    free(library_file_buffer);
 
     // Now open the live version and then return.
     library->handle = dlopen(temporary_path, RTLD_NOW);
