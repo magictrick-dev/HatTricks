@@ -5,11 +5,20 @@
 #include <cstring>
 #include <maths.h>
 
+// Required for determining when a library was last updated.
+struct DynamicLibrary
+{
+    void*   handle;
+    size_t  last_file_time;
+};
+
 // Definitions that must be defined by the platform.
 static inline void get_base_path(char* buffer, size_t buffer_size);
 static inline void set_path_from_base_path(char* buffer, size_t buffer_size, const char* path);
-static inline void* load_module_handle(const char* file_path);
+static inline size_t get_last_modified_time(const char* file_path);
+static inline DynamicLibrary load_module_handle(const char* file_path);
 void* get_proc_address(void* module_handle, const char* proc_name);
+
 
 static inline void
 set_path_from_base_path(char* buffer, size_t buffer_size, const char* path)
@@ -31,6 +40,15 @@ set_path_from_base_path(char* buffer, size_t buffer_size, const char* path)
 #if defined(__linux__)
 #include <dlfcn.h>
 #include <unistd.h>
+#include <sys/stat.h>
+
+static inline size_t
+get_last_modified_time(const char* file_path)
+{
+    struct stat file_attributes = {};
+    stat(file_path, &file_attributes);
+    return (size_t)file_attributes.st_mtime;
+}
 
 static inline void
 get_base_path(char* buffer, size_t buffer_size)
@@ -58,11 +76,14 @@ get_base_path(char* buffer, size_t buffer_size)
 
 }
 
-static inline void*
+static inline DynamicLibrary
 load_module_handle(const char* module_path)
 {
-    void* module_handle = dlopen(module_path, RTLD_NOW);
-    return module_handle;
+    DynamicLibrary result = {};
+
+    result.handle = dlopen(module_path, RTLD_NOW);
+    result.last_file_time = get_last_modified_time(module_path);
+    return result;
 }
 
 void*
@@ -90,11 +111,14 @@ main(int argc, char** argv)
     std::cout << "Request path: " << base_path_buffer << std::endl;
 
     // Attempt to open the library module.
-    void* module_handle = load_module_handle(base_path_buffer);
-    assert(module_handle != NULL);
+    DynamicLibrary hotmaths_library = load_module_handle(base_path_buffer);
+    assert(hotmaths_library.handle != NULL);
+
+    // Now print the last modified time.
+    std::cout << "Last modified time: " << hotmaths_library.last_file_time << std::endl;
 
     // Now attempt to load the library.
-    if (!init_hotmaths_library(module_handle, get_proc_address))
+    if (!init_hotmaths_library(hotmaths_library.handle, get_proc_address))
     {
         std::cout << "Unable to init library." << std::endl;
         return 1;
