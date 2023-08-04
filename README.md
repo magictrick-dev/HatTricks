@@ -12,12 +12,12 @@ things that I would otherwise not make a separate repository for.
 ### Development Environments
 
 Unless expressly stated in the project directory, most of these projects are built
-using [a build tool called CMake](https://cmake.org/). One design philosophy
-(and development pet-peeve) is dependency hunting; having to fetch each little library,
+using [a build tool called CMake](https://cmake.org/). A huge development pet-peeve
+of mine is dependency hunting; having to fetch each little library, then
 include it, and then attempt to compile everything together is such a pain. As such,
 any depencies that allow for free distribution will automatically be included in-source
 so that you don't need to do anything except configure and build using CMake for the
-targetted OS.
+targetted OS. You're welcome!
 
 For the most part, if the code I am writing can be written for multiple platforms
 without much trouble, then I will do so. I tend to write short-hand scripts to help
@@ -25,7 +25,7 @@ with building and running my applications. If you see PowerShell scripts `*.ps1`
 then the project probably builds for Windows. Likewise, `*.sh` scripts probably means
 it builds for Unix as well. This isn't a hard and fast rule, though.
 
-### Glossary
+## Glossary
 
 [DLL / Share Library Hotloading Concepts](./Hotloading) **Example Complete**
 
