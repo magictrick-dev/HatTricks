@@ -6,65 +6,58 @@ which dynamically loads itself into memory every time it detects a change (a com
 
 ### Implementation Details
 
-In order to prevent tight coupling between the loading process or executable, the
-library should define its own "loader" function. This loader function will automatically
-fill out function stubs with the appropriate address into the library. For this to
-work, the executable should provide the loader with a "get process" function which
-gives the loader function a handle to its own library and a function which allows
-it to search for its function addresses. How the executable performs this procedure
-isn't relevant for the library.
+Typically, we link shared libraries at compile time which reduces the size
+of the executable by letting external library code sit somewhere else on the OS.
+Many executables can share one shared library this way.
 
-In my test case, I created a library called "hotmaths" which simply defines a 
-function that does an operation on two integers and returns an integer. The executable
-executes this operation by supplying two numbers and and then spitting a result out
-every 250ms. This will simulate a runtime loop. The 250ms interval prevents it from
-nuking standard output with text.
+Hotloading works by using the ability to dynamically load shared libraries within
+code rather than linking them at compile time. 
 
-The code is a little dense for what it is trying to accomplish--you can heavily
-simplify this by using standard library facilities for string utilities, filepaths,
-and file operations. The only facility that you *must* write using OS calls is the
-library loader.
+The steps to load shared libraries dynamically is fairly straight forward; most
+operating systems are able to do this in 1-2 lines code. However, for hotloading,
+we need to perform some additional steps to make it work.
 
-**The rough steps of what this is doing below:**
+1. First, we need to establish an absolute pathing scheme to our executable directory.
+Operating systems usually offer a way to get the path of the executable. You might be
+thinking that the first argument of `argv` in `int main(int argc, char* argv[])`
+contains this path. This is not always true; this path corresponds to the *calling
+directory*, not the executable's directory. This path will change if you invoke an
+executable from a different path than the one the executable is in.
 
-1. Main creates a "DynamicLibrary" structure.
+2. Once we have this path, we can now construct a *relative path* to our shared library
+from this absolute path. You will need to create two paths, one path is the actual
+path to your shared library, and another path to a temporary library that may or may
+not exist.
 
-2. Create two paths, one path to the shared library relative to the executable
-and a second path to a "temporary" library location. This path shouldn't assume
-that the user is running the program in the directory that the executable exists
-in. Relative pathing will not work! You must get the executable location, and then
-construct your relative pathing scheme from that.
+3. At this point, you will want to copy the actual library to the temporary library
+location. This temporary library is what we will load into memory. Whenever we compile
+or make changes to the actual library, we may need complete write-access to that file.
+In some cases, write-access is revoked when the library is loaded into memory, so we
+will need to create a temporary library file that we load in to allow for it to be
+overwritten.
 
-    Executable path: `~/Development/Project/bin/my_executable`
+4. You will then load the temporary library using the OS calls like `LoadModuleA`
+or `dlopen`, depending on whether you're using Windows or a Unix based system.
 
-    Actual library path: `~/Development/Project/bin/my_library.so`
+5. Once it is open, you will need to capture the last write time of the time. This
+is what we are checking every loop cycle. If the actual library is updated, then we
+re-run the load library procedure in step 4.
 
-    Temporary library path: `~/Development/Project/bin/my_library_live.so`
+<br>
 
-3. You will now copy the actual library file to the temporary library location.
-In some situations, overwriting a shared library while it is in use is not possible,
-so we must create a "working copy" of the library that we can maintain in memory.
-The compiler will attempt to overwrite the library file, which is what we *want* to
-happen to allow for the hotloading functionality to work.
+The library should provide a way to load its own function pointers. This will decouple
+it from the executable should the API change. Generally speaking, if the front-end
+API changes, you won't be able to hotload the library; the executable itself is not
+"hotloadable" in the conventional sense (unless you're *really* clever).
 
-4. You will then need to capture the current file time at the time of it being loaded.
-This time will be checked at iteration of the main loop.
+**Helpful Notes:**
 
-5. When there is a time difference in the main loop, re-run the library load procedure.
+- The library you are hotloading has its own stack memory space, but it shares the
+same heap as the executable. If you want some state to persist between the executable
+and the library, then you will need the executable to manage the state through the heap.
 
-**Some helpful notes for extending this beyond trivial use-cases:**
-
-Your library uses its own memory space (but can reach out to the executable memory
-space if you provide pointers), so use caution when handling hotloading. In such
-cases when you want to preserve state, then your state should exist on the heap
-with references maintained by the executable. This creates some coupling between
-the executable and library, but is easy to manage when done correctly.
-
-In the past, I have given a fixed-size permanent heap to the library which it uses
-to maintain state through loads.
-
-You will also want to create some functionality to perform some operations when
-the library is being initialized, executed within a mainloop, shuts down (but not being
-reloaded), on-reload, and on-unload. The last two are fairly important if you want
-to do some heap initialization and heap cleanup.
+- You may want to consider adding functionality to capture when a library is hotloaded,
+such as `on_library_reload` and `on_library_unload` to perform init and cleanup
+procedures. You will call these functions when you are about to unload the library
+and when the library is successfully reloaded.
 
