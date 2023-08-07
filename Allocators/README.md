@@ -6,6 +6,16 @@ allocators request a fixed region of memory and utilize a push/pop interface to 
 arbitrary regions of memory. This method is also extremely fast, particularly for
 applications that regularly deallocate and allocate large regions of space very frequently.
 
+### Build Notes
+
+Since this application uses Windows facilities, the application uses the WinMain entry
+point which strips console output. In order to test allocators, you will need to
+open the Visual Studio solution file using Visual Studio 2022 after configuring and
+building with CMake. You will find this in the `./build` folder.
+
+Once there, you can run the application and see the output from the `OutputDebugStringA()`
+function. Alternatively, you can step through the program to see how it works.
+
 ### Implementation Details
 
 Working with stack allocators is easy, and implementing them is even easier. However,
