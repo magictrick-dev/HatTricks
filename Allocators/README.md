@@ -96,3 +96,16 @@ of the loop.
 You will probably want to write robust memory set routines. It is possible to write
 faster `memset()` and `memcpy()` routines for the stack allocator!
 
+When you are dealing with classes (and constructors), you can't a raw block of
+memory and expect them to work properly. In order for this to work, you need to
+invoke the constructor *manually* by using the placement new operator. Just like
+the normal new operator, you are saying "perform this allocation using this predefined
+chunk of memory I have provided for you". This, in effect, will perform construction
+for you. An additional side effect is that you there is no "placement delete" operator.
+You can only "delete" something you allocated from "new"; we did not use new to acquire
+a block of memory, we did this our selves. Instead, we must *manually* invoke the
+destructor ourselves and *then* can we deallocate. There are ways to bolt this
+behavior back into C++ such that we never need to do any of the above, but this
+far extends outside this example.
+
+
