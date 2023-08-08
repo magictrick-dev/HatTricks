@@ -25,7 +25,7 @@ with building and running my applications. If you see PowerShell scripts `*.ps1`
 then the project probably builds for Windows. Likewise, `*.sh` scripts probably means
 it builds for Unix as well. This isn't a hard and fast rule, though.
 
-## Glossary
+# Glossary
 
 [DLL / Share Library Hotloading Concepts](./Hotloading) **Example Complete**
 
