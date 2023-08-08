@@ -34,7 +34,7 @@ Hotloading is a very simple, yet powerful construct rarely utilized for C and C+
 This demonstration highlights the capabilities of hotloading by allowing the user to define a set front-end API
 which dynamically loads itself into memory every time it detects a change (a compilation, in this case).
 
-[Memory Management & Custom Allocators](./Allocators) **WIP**
+[Memory Management & Custom Allocators](./Allocators) **Example Complete**
 
 **About:**
 There are many ways applications manage memory, but one of the simplest
