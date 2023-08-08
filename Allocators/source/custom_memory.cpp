@@ -1,6 +1,5 @@
 #include <windows.h>
-#include <cassert>
-#include <memory.h>
+#include "custom_memory.h"
 
 static inline size_t
 get_nearest_page_granularity_size(size_t size_request)
@@ -28,7 +27,6 @@ void
 arena_pop(memory_arena_t *arena, size_t size)
 {
 
-    assert(arena != NULL);
     if (arena->commit < size)
         arena->commit = 0;
     arena->commit -= size;
@@ -40,15 +38,13 @@ void*
 arena_push(memory_arena_t *arena, size_t size)
 {
     
-    assert(arena != NULL);
-    assert((size + arena->commit) < arena->capacity);
     void* offset = ((char*)arena->memory_region) + arena->commit;
     arena->commit += size;
     return offset;
 
 }
 
-inline bool 
+bool 
 allocate_arena(memory_arena_t *arena, size_t size_request)
 {
 
@@ -66,7 +62,6 @@ allocate_arena(memory_arena_t *arena, size_t size_request)
     MEMORY_BASIC_INFORMATION memory_information = {};
     VirtualQuery(memory_ptr, &memory_information, sizeof(MEMORY_BASIC_INFORMATION));
     size_actual = (size_t)memory_information.RegionSize;
-    assert(size_maximum == size_actual); // The OS should give us back the correct size.
 
     // Fill out the memory arena struct.
     arena->memory_region = memory_ptr;
