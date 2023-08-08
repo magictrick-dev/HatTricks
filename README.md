@@ -29,6 +29,17 @@ it builds for Unix as well. This isn't a hard and fast rule, though.
 
 [DLL / Share Library Hotloading Concepts](./Hotloading) **Example Complete**
 
-**About:** Hotloading is a very simple, yet powerful construct rarely utilized for C and C++ applications.
+**About:**
+Hotloading is a very simple, yet powerful construct rarely utilized for C and C++ applications.
 This demonstration highlights the capabilities of hotloading by allowing the user to define a set front-end API
 which dynamically loads itself into memory every time it detects a change (a compilation, in this case).
+
+[Memory Management & Custom Allocators](./Allocators) **WIP**
+
+**About:**
+There are many ways applications manage memory, but one of the simplest
+and most robust way of handling heap allocations is through stack allocators. Stack
+allocators request a fixed region of memory and utilize a push/pop interface to receive
+arbitrary regions of memory. This method is also extremely fast, particularly for
+applications that regularly deallocate and allocate large regions of space very frequently.
+
