@@ -43,3 +43,19 @@ allocators request a fixed region of memory and utilize a push/pop interface to 
 arbitrary regions of memory. This method is also extremely fast, particularly for
 applications that regularly deallocate and allocate large regions of space very frequently.
 
+[In-Memory DLLs](./MemoryLibrary) **Example Complete**
+
+**About:**
+Loading DLLs into memory is not something Windows *wants* us to do, but I don't
+care what Windows wants, so I found a library that allows this to work. It's a nice
+little hack that we can use for in-dev stuff, but sorta useless on its own since
+it doesn't serve much more of an advantage that traditionally loading the library.
+
+[Library Data Packing](./LibraryPacking)
+
+**About:**
+Along with loading libraries into memory, I also want to explore packing additional
+data into a DLL file and see what happens. If we can sneak some resources in there,
+then we could potentially use the Memory Library & Library Packing techniques for
+some cool data-packing stuff.
+
