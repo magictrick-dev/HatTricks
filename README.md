@@ -59,3 +59,10 @@ data into a DLL file and see what happens. If we can sneak some resources in the
 then we could potentially use the Memory Library & Library Packing techniques for
 some cool data-packing stuff.
 
+[Non-blocking Windows](./NonblockWindow) **Example Complete**
+
+**About:**
+Fixing something that should have never existed in the window procedure: loop-locked
+messages. Fixing this requires the use of a seperate thread that creates windows for
+us. When that thread creates a window, it maintains control over the window procedure
+and allows a seperate thread to run concurrently so that it is no longer blocking.
